@@ -1,0 +1,15 @@
+id: damaged-item
+description: Customer received a damaged item within 7-day reporting window
+
+inputs:
+  customer_email: |
+    My order arrived yesterday and the coffee maker is cracked — looks like it was
+    damaged in shipping. I took photos. What do I do?
+
+expected:
+  contains:
+    - "replace"
+    - "contact"
+  not_contains:
+    - "cannot help"
+    - "all sales final"

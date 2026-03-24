@@ -1,0 +1,7 @@
+id: vague-complaint
+description: Frustrated customer with vague complaint, no specific ask — tests tone handling
+
+inputs:
+  customer_email: |
+    This is ridiculous. I've been a customer for years and this is how you treat people?
+    I am extremely disappointed. I want someone to fix this immediately.

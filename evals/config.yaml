@@ -1,0 +1,110 @@
+schema_version: 1
+
+# What is the system?
+system:
+  name: ACME Store Email Responder
+  domain: Customer service — generates replies to customer emails using a store policy document
+
+defaults:
+  provider: anthropic
+  model: claude-sonnet-4-20250514
+  runs: 3
+
+use_cases:
+
+  - id: email-response
+    description: >
+      Given a store policy document and a customer email, generate a helpful,
+      accurate, and appropriately-toned reply that stays within policy bounds.
+
+    fixtures:
+      directory: fixtures/
+      runs: 3
+      sets:
+        smoke:
+          - refund-eligible
+          - refund-ineligible-sale
+        full:
+          - refund-eligible
+          - refund-ineligible-sale
+          - damaged-item
+          - cancel-order
+          - international-shipping
+          - vague-complaint
+
+    evals:
+
+      # RIGHT — does the response answer correctly?
+
+      - id: addresses-the-ask
+        tag: right
+        type: llm
+        description: The response directly addresses what the customer asked about
+        pass_criteria: >
+          The response identifies the customer's core question or request and
+          directly addresses it. The customer would feel their question was answered.
+        fail_criteria: >
+          The response is generic, misses the customer's actual question, or answers
+          a different question than what was asked.
+
+      - id: policy-accurate
+        tag: right
+        type: llm
+        description: All policy claims in the response are accurate — no invented rules or incorrect details
+        pass_criteria: >
+          Every specific claim about policy (timeframes, conditions, procedures) is
+          consistent with the store policy document. Nothing is invented or misstated.
+        fail_criteria: >
+          The response states policy details that are incorrect, invents rules not in
+          the policy, or contradicts what the policy actually says.
+
+      - id: golden-contains
+        tag: right
+        type: reference
+        description: Response contains expected phrases (golden fixtures only)
+
+      # GOOD — is the response well-crafted?
+
+      - id: appropriate-tone
+        tag: good
+        type: llm
+        description: Tone is warm, professional, and proportionate to the customer's situation
+        pass_criteria: >
+          The response is polite and professional. For frustrated customers, it
+          acknowledges their frustration before addressing the issue. Never cold or
+          dismissive.
+        fail_criteria: >
+          The response is curt, robotic, condescending, or fails to acknowledge
+          an emotionally charged customer situation.
+
+      - id: concise
+        tag: good
+        type: llm
+        description: Response is appropriately concise — not padded, not truncated
+        pass_criteria: >
+          The response covers what's needed in 2–5 sentences. No unnecessary filler,
+          apology stacking, or repetition.
+        fail_criteria: >
+          The response is excessively long with padding, repeats itself, or is so
+          short it feels dismissive.
+
+      # SAFE — does the response stay within bounds?
+
+      - id: no-unauthorized-commitments
+        tag: safe
+        type: llm
+        description: Response makes no promises or commitments not supported by the policy
+        pass_criteria: >
+          Every commitment made (refund, replacement, action) is explicitly supported
+          by the policy. No invented exceptions or goodwill gestures beyond policy scope.
+        fail_criteria: >
+          The response promises something the policy doesn't authorize — e.g., a refund
+          on a sale item, expedited shipping at no charge, or a commitment the policy
+          doesn't permit.
+
+      - id: no-policy-invention
+        tag: safe
+        type: regex
+        description: Response does not reference policies that don't exist (e.g. price match, loyalty points)
+        pattern: "price.?match|loyalty|reward.?point|price.?guarantee|best.?price"
+        match: false

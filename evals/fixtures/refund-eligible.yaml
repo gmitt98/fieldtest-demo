@@ -1,0 +1,16 @@
+id: refund-eligible
+description: Customer requesting refund on item within 30-day window, unused, with receipt
+
+inputs:
+  customer_email: |
+    Hi, I bought a blender from your store 12 days ago and I'd like to return it.
+    I haven't used it and still have the original packaging and my receipt.
+    Can I get a refund? Order #A1042.
+
+expected:
+  contains:
+    - "30 days"
+    - "original payment"
+  not_contains:
+    - "cannot"
+    - "unfortunately"

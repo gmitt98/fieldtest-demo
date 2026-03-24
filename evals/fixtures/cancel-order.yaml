@@ -1,0 +1,7 @@
+id: cancel-order
+description: Customer wants to cancel — placed order 3 hours ago, past 1-hour window
+
+inputs:
+  customer_email: |
+    I just placed an order about 3 hours ago and I need to cancel it.
+    I ordered the wrong item. Order #B8821.

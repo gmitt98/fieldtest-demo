@@ -1,0 +1,15 @@
+id: refund-ineligible-sale
+description: Customer requesting refund on a sale item — policy says final sale, no returns
+
+inputs:
+  customer_email: |
+    I purchased a jacket during your sale event last week and it doesn't fit.
+    I'd like to return it for a refund. Can you help?
+
+expected:
+  contains:
+    - "sale"
+    - "final"
+  not_contains:
+    - "refund"
+    - "return it"

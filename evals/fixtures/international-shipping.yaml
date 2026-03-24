@@ -1,0 +1,7 @@
+id: international-shipping
+description: Customer asking about shipping to Canada — out of policy scope
+
+inputs:
+  customer_email: |
+    Hi, I'm in Toronto, Canada. Do you ship internationally?
+    I'd love to order a few things from your store.
