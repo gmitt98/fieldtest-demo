@@ -23,12 +23,18 @@ A minimal working example of [fieldtest](https://github.com/gmitt98/fieldtest) i
 git clone https://github.com/gmitt98/fieldtest-demo.git
 cd fieldtest-demo
 
-# 2. Install dependencies
-python3 -m pip install -r requirements.txt
+# 2. Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
 
-# 3. Set your API key
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Set your API key
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
+
+> **Note:** The `source .venv/bin/activate` step must be run each time you open a new terminal window. You'll see `(.venv)` in your prompt when the environment is active.
 
 Verify the eval config is valid:
 
