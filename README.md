@@ -1,71 +1,177 @@
 # fieldtest-demo
 
-A minimal demo app showing [fieldtest](https://github.com/gmitt98/fieldtest) in practice.
+A minimal working example of [fieldtest](https://github.com/gmitt98/fieldtest) in practice.
 
-**The app:** A customer service email responder for a fictional store. Give it a policy document and a customer email — it generates a reply.
+**The system:** A customer service email responder for a fictional store (ACME). Give it a policy document and a customer email — it generates a reply.
 
-**The point:** Show the complete fieldtest workflow on something simple enough to understand in minutes.
+**The point:** A complete, runnable eval suite on something simple enough to understand in minutes — right/good/safe coverage, all four eval types, golden fixtures and variation fixtures.
 
 ---
 
-## What's here
+## Prerequisites
 
-```
-app.py          — the system under test (two inputs → one output)
-policy.txt      — the business context document
-runner.py       — fieldtest runner (calls app.py, writes outputs/)
-evals/
-  config.yaml   — use cases, evals (right/good/safe), fixture sets
-  fixtures/
-    golden/     — fixtures with expected output checks
-    variations/ — fixtures without expected checks
+- Python 3.10+
+- An Anthropic API key (`sk-ant-...`)
+- That's it
+
+---
+
+## Setup
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/gmitt98/fieldtest-demo.git
+cd fieldtest-demo
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Set your API key
+export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-## Eval coverage
+Verify the eval config is valid:
+
+```bash
+fieldtest validate
+```
+
+Expected output:
+```
+✓ config valid: evals/config.yaml
+  1 use case(s), 7 eval(s)
+  by tag — right: 3, good: 2, safe: 2
+  8 explicitly listed fixture(s)
+```
+
+---
+
+## Run the eval
+
+Two steps: run the system (generates outputs), then score (judges outputs).
+
+### Step 1 — Run the system
+
+```bash
+# Smoke set: 2 fixtures × 3 runs each (fast, ~30 seconds)
+python runner.py smoke
+
+# Full set: 6 fixtures × 3 runs each (~2 minutes)
+python runner.py full
+```
+
+You'll see output like:
+```
+use_case: email-response | set: smoke | 2 fixtures × 3 runs
+  refund-eligible  run 1/3... ✓
+  refund-eligible  run 2/3... ✓
+  refund-eligible  run 3/3... ✓
+  refund-ineligible-sale  run 1/3... ✓
+  ...
+```
+
+Outputs land in `evals/outputs/{fixture-id}/run-{n}.txt`.
+
+### Step 2 — Score
+
+```bash
+# Score the smoke set
+fieldtest score smoke
+
+# Or score the full set
+fieldtest score full
+```
+
+Scoring runs the judges (LLM, regex, reference) against every output file and writes results to `evals/results/`.
+
+### Step 3 — View the report
+
+```bash
+fieldtest view
+```
+
+Opens the HTML report in your browser. Shows tag health cards (RIGHT / GOOD / SAFE pass rates), a fixture × eval matrix, and per-run reasoning for every cell.
+
+---
+
+## What you'll see
+
+Seven evals across three lenses:
 
 | eval | tag | type | what it checks |
 |------|-----|------|----------------|
-| addresses-the-ask | right | llm | Did it answer the customer's actual question? |
-| policy-accurate | right | llm | Are all policy claims correct? |
-| golden-contains | right | reference | Expected phrases present (golden fixtures) |
-| appropriate-tone | good | llm | Warm, professional, proportionate? |
-| concise | good | llm | 2–5 sentences, no padding? |
-| no-unauthorized-commitments | safe | llm | No promises beyond what policy allows? |
-| no-policy-invention | safe | regex | No invented policies (price match, loyalty points)? |
+| `addresses-the-ask` | RIGHT | llm | Did it answer the customer's actual question? |
+| `policy-accurate` | RIGHT | llm | Are all policy claims correct per the store policy? |
+| `golden-contains` | RIGHT | reference | Expected phrases present (golden fixtures only) |
+| `appropriate-tone` | GOOD | llm | Warm, professional, proportionate to the situation? |
+| `concise` | GOOD | llm | 2–5 sentences, no padding or truncation? |
+| `no-unauthorized-commitments` | SAFE | llm | No promises beyond what the policy allows? |
+| `no-policy-invention` | SAFE | regex | No invented policies (price match, loyalty points)? |
 
-## Quickstart
+Six fixtures — two golden (with `expected` blocks that `golden-contains` checks), four variations (property-based evals only):
+
+| fixture | type | scenario |
+|---------|------|----------|
+| `refund-eligible` | golden | In-window return, unused item, has receipt |
+| `refund-ineligible-sale` | golden | Sale item — policy says no refunds |
+| `damaged-item` | variation | Item arrived damaged — tests tone + commitment scope |
+| `cancel-order` | variation | Order cancellation request |
+| `international-shipping` | variation | Question about shipping to Canada |
+| `vague-complaint` | variation | Frustrated customer, no specific ask |
+
+---
+
+## All commands
 
 ```bash
-# Install
-pip install -r requirements.txt
-export ANTHROPIC_API_KEY=sk-ant-...
-
-# Validate config
+# Check config before running
 fieldtest validate
 
-# Run the system (generates outputs/)
-python runner.py smoke    # 2 fixtures
-python runner.py full     # all 6 fixtures
-
-# Score
-fieldtest score smoke
-fieldtest score full
-
-# View history
+# View previous runs
 fieldtest history
 
-# Compare runs
+# Compare two runs (default: most recent vs prior)
 fieldtest diff
+
+# Open HTML report (most recent run)
+fieldtest view
+
+# Delete all result files (keeps outputs/)
+fieldtest clean
 ```
+
+---
+
+## What's in each file
+
+```
+app.py          — the system under test (policy + email → reply)
+policy.txt      — ACME Store's business rules (the grounding document)
+runner.py       — reads config, calls app.py for each fixture, writes outputs/
+requirements.txt
+evals/
+  config.yaml           — system definition, evals, fixture sets
+  fixtures/
+    refund-eligible.yaml          ← golden (has expected block)
+    refund-ineligible-sale.yaml   ← golden (has expected block)
+    damaged-item.yaml             ← variation (no expected block)
+    cancel-order.yaml             ← variation
+    international-shipping.yaml   ← variation
+    vague-complaint.yaml          ← variation
+  outputs/              — written by runner.py (gitignored)
+  results/              — written by fieldtest score (gitignored)
+```
+
+---
 
 ## The /optimize skill
 
-If you have [Claude Code](https://claude.ai/code) and the fieldtest `/optimize` command installed, you can run automated prompt optimization against these evals:
+If you have [Claude Code](https://claude.ai/code) and the fieldtest `/optimize` command installed:
 
 ```
 /optimize
 ```
 
-The agent reads the failing evals, diagnoses which part of the prompt is responsible, edits `app.py`, re-runs the system, and re-scores. It loops up to N cycles (you set the threshold).
+The agent reads the failing evals, diagnoses which part of the prompt is responsible, edits `app.py`, re-runs the system, and re-scores. It loops until evals pass or the cycle limit is hit.
 
-To install the optimize command, copy `.claude/commands/optimize.md` from the [fieldtest repo](https://github.com/gmitt98/fieldtest) into your project's `.claude/commands/` directory.
+To install: copy `.claude/commands/optimize.md` from the [fieldtest repo](https://github.com/gmitt98/fieldtest) into this project's `.claude/commands/` directory.
