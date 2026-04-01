@@ -170,6 +170,22 @@ evals/
 
 ---
 
+## A note on model IDs
+
+This demo uses `claude-3-5-haiku-latest` in both `app.py` and `evals/config.yaml`. The `-latest` alias always resolves to the current stable version of the model, so the demo stays runnable as Anthropic releases new versions.
+
+**Don't do this in a real eval suite.** Pin a specific model ID instead:
+
+```yaml
+# evals/config.yaml
+defaults:
+  model: claude-3-5-haiku-20241022  # pinned — behavior won't change under you
+```
+
+The `-latest` alias can silently point to a different model after an Anthropic release. If your evals pass today and fail next week, you won't know whether your system regressed or the model changed. Pinned IDs make runs reproducible and deltas meaningful.
+
+---
+
 ## The /optimize skill
 
 If you have [Claude Code](https://claude.ai/code) and the fieldtest `/optimize` command installed:
