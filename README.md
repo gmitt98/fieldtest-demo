@@ -172,17 +172,24 @@ evals/
 
 ## A note on model IDs
 
-This demo uses `claude-3-5-haiku-latest` in both `app.py` and `evals/config.yaml`. The `-latest` alias always resolves to the current stable version of the model, so the demo stays runnable as Anthropic releases new versions.
+This demo uses `claude-haiku-4-5-20251001` — the fastest and cheapest model available at the time of writing. Anthropic periodically deprecates old model IDs, which will cause a 404 error.
 
-**Don't do this in a real eval suite.** Pin a specific model ID instead:
+If you hit a 404, list the models available on your account and update the ID in `app.py` and `evals/config.yaml`:
 
-```yaml
-# evals/config.yaml
-defaults:
-  model: claude-3-5-haiku-20241022  # pinned — behavior won't change under you
+```bash
+python3 -c "import anthropic; [print(m.id) for m in anthropic.Anthropic().models.list()]"
 ```
 
-The `-latest` alias can silently point to a different model after an Anthropic release. If your evals pass today and fail next week, you won't know whether your system regressed or the model changed. Pinned IDs make runs reproducible and deltas meaningful.
+Pick the Haiku model from the list (cheapest/fastest) and replace the model string in both files.
+
+**For your own eval suite, pin a specific model ID** rather than using the cheapest available at setup time:
+
+```yaml
+defaults:
+  model: claude-haiku-4-5-20251001  # pinned — behavior won't silently change
+```
+
+If your evals pass today and fail next week, you need to know whether your system regressed or the model changed. Pinned IDs make that distinction possible. Undated aliases (`claude-sonnet-4-6`) stay current automatically but can silently shift behavior between runs.
 
 ---
 
