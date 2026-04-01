@@ -24,7 +24,7 @@ git clone https://github.com/gmitt98/fieldtest-demo.git
 cd fieldtest-demo
 
 # 2. Install dependencies
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 
 # 3. Set your API key
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -54,10 +54,10 @@ Two steps: run the system (generates outputs), then score (judges outputs).
 
 ```bash
 # Smoke set: 2 fixtures × 3 runs each (fast, ~30 seconds)
-python runner.py smoke
+python3 runner.py smoke
 
 # Full set: 6 fixtures × 3 runs each (~2 minutes)
-python runner.py full
+python3 runner.py full
 ```
 
 You'll see output like:
