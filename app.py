@@ -30,7 +30,7 @@ STORE POLICY:
 {policy}"""
 
     response = client.messages.create(
-        model="claude-haiku-4-20250514",
+        model="claude-haiku-3-5-20251001",
         max_tokens=512,
         system=system_prompt,
         messages=[{"role": "user", "content": customer_email}],
